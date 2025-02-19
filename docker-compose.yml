@@ -31,6 +31,8 @@ services:
     image: mongo:5.0
     container_name: auth-db
     restart: always
+    ports:
+      - 27017:27017
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: password
@@ -59,7 +61,7 @@ services:
     container_name: menu-db
     restart: always
     ports:
-      - 27017:27017
+      - 27018:27017
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: password
