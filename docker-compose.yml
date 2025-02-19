@@ -1,4 +1,19 @@
 services:
+  gateway-service:
+    build: 
+      context: gateway-service
+      dockerfile: Dockerfile
+    env_file:
+      - ./gateway-service/.env
+    networks:
+      - test-network
+    ports:
+      - "8002:8002"
+    depends_on:
+      - auth-service
+      - menu-service
+
+
   auth-service:
     build: 
       context: auth-service
