@@ -1,4 +1,4 @@
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -87,15 +87,18 @@ export const authController = {
                 return res.status(401).json({ message: 'Invalid credentials' });
             }
 
-            // Créer les tokens
+            // Créer les tokens avec l'ID en string
             const accessToken = jwt.sign(
-                { userId: user._id, username: user.username },
+                { 
+                    userId: user._id.toString(),
+                    username: user.username 
+                },
                 JWT_SECRET,
                 { expiresIn: '15m' }
             );
 
             const refreshToken = jwt.sign(
-                { userId: user._id },
+                { userId: user._id.toString() },
                 JWT_REFRESH_SECRET,
                 { expiresIn: '7d' }
             );
@@ -184,7 +187,7 @@ export const authController = {
                 // Créer un nouveau access token
                 const user = await db.collection('users').findOne({ _id: tokenDoc.userId });
                 const accessToken = jwt.sign(
-                    { userId: user._id, username: user.username },
+                    { userId: user._id.toString(), username: user.username },
                     JWT_SECRET,
                     { expiresIn: '15m' }
                 );
@@ -199,33 +202,44 @@ export const authController = {
 
     // Get User Info
     me: async (req, res) => {
+        let client;
         try {
-            const authHeader = req.headers.authorization;
-            if (!authHeader) {
-                return res.status(401).json({ message: 'No token provided' });
+            const token = req.headers.authorization.split(' ')[1];
+            const decoded = jwt.verify(token, JWT_SECRET);
+
+            client = await MongoClient.connect(url);
+            const db = client.db('auth_db');
+            
+            // Convertir l'ID string en ObjectId pour la recherche
+            const user = await db.collection('users').findOne(
+                { _id: ObjectId.createFromHexString(decoded.userId) },
+                { projection: { password: 0 } }  // Exclure le mot de passe
+            );
+
+            if (!user) {
+                return res.status(404).json({ message: 'User not found' });
             }
 
-            const token = authHeader.split(' ')[1];
-            jwt.verify(token, JWT_SECRET, async (err, decoded) => {
-                if (err) {
-                    return res.status(401).json({ message: 'Invalid token' });
-                }
-
-                const client = await MongoClient.connect(url);
-                const db = client.db('auth_db');
-                const user = await db.collection('users').findOne(
-                    { _id: decoded.userId },
-                    { projection: { password: 0 } }
-                );
-
-                client.close();
-                if (!user) {
-                    return res.status(404).json({ message: 'User not found' });
-                }
-                res.json(user);
+            res.json({
+                _id: user._id.toString(),
+                username: user.username,
+                email: user.email,
+                created_at: user.created_at
             });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            console.error('Error in me:', error);
+            if (error.name === 'JsonWebTokenError') {
+                return res.status(401).json({ message: 'Invalid token' });
+            }
+            if (error.name === 'TokenExpiredError') {
+                return res.status(401).json({ message: 'Token expired' });
+            }
+            if (error.message.includes('hex string')) {
+                return res.status(400).json({ message: 'Invalid user ID format' });
+            }
+            res.status(500).json({ error: 'Internal server error', details: error.message });
+        } finally {
+            if (client) await client.close();
         }
     }
 }; 
