@@ -26,8 +26,6 @@ services:
       - auth-db
     volumes:
       - ./auth-service:/app
-    ports:
-      - "8000:8000"
 
   auth-db:
     image: mongo:5.0
@@ -58,8 +56,6 @@ services:
       - menu-db
     volumes:
       - ./menu-service:/app
-    ports:
-      - "8001:8001"
 
   menu-db:
     image: mongo:5.0
