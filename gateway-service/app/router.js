@@ -1,5 +1,6 @@
 import express from "express";
 import { createProxyMiddleware } from 'http-proxy-middleware';
+import { authMiddleware } from './middlewares/authMiddleware.js';
 
 const router = express.Router();
 
@@ -26,6 +27,12 @@ const createServiceProxy = (target, pathRewrite) => {
                     const body = new URLSearchParams(req.body).toString();
                     writeBody(body);
                 }
+            }
+
+            // Transmettre les informations de l'utilisateur au service
+            if (req.user) {
+                proxyReq.setHeader('X-User-Id', req.user.userId);
+                proxyReq.setHeader('X-User-Role', req.user.role || 'user');
             }
         },
         // Gestion des erreurs
@@ -64,6 +71,9 @@ const menuServiceProxy = createServiceProxy(
     process.env.MENU_SERVICE_URL,
     { '^/menu': '' }
 );
+
+// Appliquer le middleware d'authentification à toutes les routes
+router.use(authMiddleware);
 
 // Routes
 router.get('/', (req, res) => {
