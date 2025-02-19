@@ -36,8 +36,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: password
       MONGO_INITDB_DATABASE: auth_db
     volumes:
-      - type: volume
-        target: /data/db
+      - auth_mongodb_data:/data/db
       - ./auth-service/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
     networks:
       - test-network
@@ -95,6 +94,6 @@ networks:
     driver: bridge
 
 volumes:
-  auth-service-data:
+  auth_mongodb_data:
   menu_mongodb_data:
   
