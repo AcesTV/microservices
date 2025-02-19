@@ -15,10 +15,9 @@ db.createUser({
 db.createCollection('users');
 db.createCollection('tokens');
 
-// Vous pouvez ajouter des données initiales si nécessaire
 db.users.insertOne({
   username: 'admin',
-  password: 'hashed_password', // À remplacer par un vrai hash
+  password: 'hashed_password',
   role: 'admin',
   created_at: new Date()
 }); 
