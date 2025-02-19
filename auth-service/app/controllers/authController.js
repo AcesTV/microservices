@@ -1,5 +1,5 @@
 import { MongoClient } from 'mongodb';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 const url = process.env.MONGODB_URI;
@@ -38,7 +38,7 @@ export const authController = {
             client.close();
             res.status(201).json({ 
                 message: 'User created successfully',
-                userId: result.insertedId 
+                userId: result.insertedId,
             });
         } catch (error) {
             res.status(500).json({ error: error.message });
