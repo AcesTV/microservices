@@ -14,5 +14,5 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
         extended: true
     }));
-app.use(router); // Requests processing will be defined in the file router
+app.use(router);
 app.listen(port, () => console.log('Server app listening on port ' + port));
