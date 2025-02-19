@@ -1,4 +1,4 @@
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 
 const url = process.env.MONGODB_URI;
 
@@ -21,11 +21,16 @@ export const productController = {
         try {
             const client = await MongoClient.connect(url);
             const db = client.db('menu_db');
-            const product = await db.collection('products').findOne({ _id: req.params.id });
+            const product = await db.collection('products').findOne({ 
+                _id: ObjectId.createFromHexString(req.params.id)
+            });
             client.close();
             if (!product) return res.status(404).json({ message: 'Produit non trouvé' });
             res.json(product);
         } catch (error) {
+            if (error.message.includes('hex string')) {
+                return res.status(400).json({ message: 'ID invalide' });
+            }
             res.status(500).json({ error: error.message });
         }
     },
@@ -55,13 +60,16 @@ export const productController = {
             const client = await MongoClient.connect(url);
             const db = client.db('menu_db');
             const result = await db.collection('products').updateOne(
-                { _id: req.params.id },
+                { _id: ObjectId.createFromHexString(req.params.id) },
                 { $set: { name, description, updated_at: new Date() } }
             );
             client.close();
             if (result.matchedCount === 0) return res.status(404).json({ message: 'Produit non trouvé' });
             res.json({ message: 'Produit mis à jour' });
         } catch (error) {
+            if (error.message.includes('hex string')) {
+                return res.status(400).json({ message: 'ID invalide' });
+            }
             res.status(500).json({ error: error.message });
         }
     },
@@ -71,11 +79,16 @@ export const productController = {
         try {
             const client = await MongoClient.connect(url);
             const db = client.db('menu_db');
-            const result = await db.collection('products').deleteOne({ _id: req.params.id });
+            const result = await db.collection('products').deleteOne({ 
+                _id: ObjectId.createFromHexString(req.params.id)
+            });
             client.close();
             if (result.deletedCount === 0) return res.status(404).json({ message: 'Produit non trouvé' });
             res.json({ message: 'Produit supprimé' });
         } catch (error) {
+            if (error.message.includes('hex string')) {
+                return res.status(400).json({ message: 'ID invalide' });
+            }
             res.status(500).json({ error: error.message });
         }
     }

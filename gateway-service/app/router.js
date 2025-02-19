@@ -10,18 +10,46 @@ const createServiceProxy = (target, pathRewrite) => {
         changeOrigin: true,
         pathRewrite,
         logLevel: 'debug',
-        onError: (err, req, res) => {
-            console.error('Proxy Error:', err);
-            res.status(500).json({ error: 'Service Unavailable', details: err.message });
-        },
+        // Configuration pour gérer tous les types de requêtes
         onProxyReq: (proxyReq, req, res) => {
-            // Gérer le corps de la requête pour les requêtes POST
-            if (req.body && req.method === 'POST') {
-                const bodyData = JSON.stringify(req.body);
-                proxyReq.setHeader('Content-Type', 'application/json');
-                proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
-                proxyReq.write(bodyData);
+            // Gérer le corps pour les requêtes avec un body (POST, PUT, PATCH)
+            if (['POST', 'PUT', 'PATCH'].includes(req.method) && req.body) {
+                const contentType = proxyReq.getHeader('Content-Type');
+                const writeBody = (bodyData) => {
+                    proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+                    proxyReq.write(bodyData);
+                };
+
+                if (contentType === 'application/json') {
+                    writeBody(JSON.stringify(req.body));
+                } else if (contentType === 'application/x-www-form-urlencoded') {
+                    const body = new URLSearchParams(req.body).toString();
+                    writeBody(body);
+                }
             }
+        },
+        // Gestion des erreurs
+        onError: (err, req, res) => {
+            console.error('Proxy Error:', {
+                method: req.method,
+                path: req.path,
+                error: err.message
+            });
+            res.status(502).json({
+                error: 'Service Unavailable',
+                details: err.message,
+                method: req.method,
+                path: req.path
+            });
+        },
+        // Configuration des en-têtes
+        onProxyRes: (proxyRes, req, res) => {
+            proxyRes.headers['x-proxied-by'] = 'gateway';
+            console.log('Proxy Response:', {
+                method: req.method,
+                path: req.path,
+                status: proxyRes.statusCode
+            });
         }
     });
 };
@@ -48,7 +76,11 @@ router.use('/menu', menuServiceProxy);
 
 // 404 handler
 router.use((req, res) => {
-    res.status(404).json({ error: 'Not Found' });
+    res.status(404).json({ 
+        error: 'Not Found',
+        path: req.path,
+        method: req.method
+    });
 });
 
 export default router;
