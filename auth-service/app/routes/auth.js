@@ -4,6 +4,16 @@ import { authMiddleware } from '../middlewares/auth.js';
 
 const router = express.Router();
 
+// Debug middleware
+router.use((req, res, next) => {
+    console.log('Auth Route:', {
+        method: req.method,
+        path: req.path,
+        body: req.body
+    });
+    next();
+});
+
 // Routes publiques
 router.post('/signup', authController.signup);
 router.post('/signin', authController.signin);

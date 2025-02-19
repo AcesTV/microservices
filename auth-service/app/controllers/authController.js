@@ -9,9 +9,16 @@ const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secre
 export const authController = {
     // Sign Up
     signup: async (req, res) => {
+        let client;
         try {
+            client = await MongoClient.connect(url);
+
             const { username, password, email } = req.body;
-            const client = await MongoClient.connect(url);
+
+            if (!username || !password || !email) {
+                return res.status(400).json({ message: 'Missing required fields' });
+            }
+
             const db = client.db('auth_db');
 
             // Vérifier si l'utilisateur existe déjà
@@ -20,7 +27,6 @@ export const authController = {
             });
 
             if (existingUser) {
-                client.close();
                 return res.status(400).json({ message: 'Username or email already exists' });
             }
 
@@ -34,36 +40,50 @@ export const authController = {
                 password: hashedPassword,
                 created_at: new Date()
             });
+            console.log('User created with ID:', result.insertedId);
 
-            client.close();
             res.status(201).json({ 
                 message: 'User created successfully',
-                userId: result.insertedId,
+                userId: result.insertedId
             });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            console.error('Error in signup:', error);
+            res.status(500).json({ 
+                error: 'Internal server error',
+                details: error.message 
+            });
+        } finally {
+            if (client) {
+                console.log('Closing MongoDB connection');
+                await client.close();
+            }
         }
     },
 
     // Sign In
     signin: async (req, res) => {
+        let client;
         try {
             const { username, password } = req.body;
-            const client = await MongoClient.connect(url);
+            console.log('Signin attempt for username:', username);
+
+            if (!username || !password) {
+                return res.status(400).json({ message: 'Missing credentials' });
+            }
+
+            client = await MongoClient.connect(url);
             const db = client.db('auth_db');
 
             // Trouver l'utilisateur
             const user = await db.collection('users').findOne({ username });
 
             if (!user) {
-                client.close();
                 return res.status(401).json({ message: 'Invalid credentials' });
             }
 
             // Vérifier le mot de passe
             const validPassword = await bcrypt.compare(password, user.password);
             if (!validPassword) {
-                client.close();
                 return res.status(401).json({ message: 'Invalid credentials' });
             }
 
@@ -86,11 +106,19 @@ export const authController = {
                 token: refreshToken,
                 created_at: new Date()
             });
+            console.log('Tokens created and saved');
 
-            client.close();
             res.json({ accessToken, refreshToken });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            console.error('Error in signin:', error);
+            res.status(500).json({ 
+                error: 'Internal server error',
+                details: error.message 
+            });
+        } finally {
+            if (client) {
+                await client.close();
+            }
         }
     },
 
