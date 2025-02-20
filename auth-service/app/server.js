@@ -2,7 +2,6 @@ import express from "express";
 import router from "./router.js";
 import cors from 'cors';
 import morgan from 'morgan';
-import { MessagingService } from '@myapp/shared';
 
 const app = express();
 const port = process.env.PORT || 8000;
@@ -23,8 +22,6 @@ app.use((err, req, res, next) => {
 
 const startServer = async () => {
     try {
-        const messagingService = new MessagingService();
-        
         app.listen(port, () => {
             console.log(`Auth service is running on port ${port}`);
         });
