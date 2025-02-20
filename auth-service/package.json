@@ -19,6 +19,8 @@
     "pg": "^8.13.3",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
-    "nodemon": "^3.1.9"
+    "nodemon": "^3.1.9",
+    "amqplib": "^0.10.3",
+    "@myapp/shared": "file:../shared-lib"
   }
 }

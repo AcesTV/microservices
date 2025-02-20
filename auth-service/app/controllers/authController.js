@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import pool from '../config/database.js';
+import messagingService from '../messaging/messagingService.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PRIVATE_KEY = fs.readFileSync(path.join(__dirname, '../../keys/jwtprivate.pem'));
@@ -93,6 +94,17 @@ export const authController = {
             await client.query(
                 'INSERT INTO tokens (user_id, token) VALUES ($1, $2)',
                 [user.id, refreshToken]
+            );
+
+            // Publier un événement de connexion
+            await messagingService.publishEvent(
+                'auth',
+                'user.signin',
+                {
+                    userId: user.id,
+                    username: user.username,
+                    timestamp: new Date()
+                }
             );
 
             res.json({ accessToken, refreshToken });

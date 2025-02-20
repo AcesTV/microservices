@@ -1,4 +1,5 @@
 import pool from '../config/database.js';
+import messagingService from '../messaging/messagingService.js';
 
 export const orderController = {
     // Créer une commande
@@ -26,6 +27,19 @@ export const orderController = {
                     [order.id, item.productId, item.quantity, item.unitPrice]
                 );
             }
+
+            // Publier un événement de création de commande
+            await messagingService.publishEvent(
+                'orders',
+                'order.created',
+                {
+                    orderId: order.id,
+                    userId: order.user_id,
+                    totalAmount: order.total_amount,
+                    items: items,
+                    timestamp: new Date()
+                }
+            );
 
             await client.query('COMMIT');
             res.status(201).json(order);
