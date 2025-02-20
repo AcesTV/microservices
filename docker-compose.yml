@@ -25,6 +25,7 @@ services:
       - test-network
     depends_on:
       - auth-db
+      - rabbitmq
     volumes:
       - ./auth-service:/app
 
@@ -52,6 +53,7 @@ services:
       - test-network
     depends_on:
       - menu-db
+      - rabbitmq
     volumes:
       - ./menu-service:/app
 
@@ -114,6 +116,7 @@ services:
       - test-network
     depends_on:
       - order-db
+      - rabbitmq
     volumes:
       - ./order-service:/app
 
@@ -131,6 +134,21 @@ services:
     networks:
       - test-network
 
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: password
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - test-network
+    ports:
+      - 5672:5672
+      - 15672:15672
+
 networks:
   test-network:
     driver: bridge
@@ -139,5 +157,6 @@ volumes:
   auth_postgres_data:
   menu_mongodb_data:
   order_postgres_data:
+  rabbitmq_data:
   keys:
   
