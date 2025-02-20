@@ -73,7 +73,7 @@ export const authController = {
             }
 
             const accessToken = jwt.sign(
-                { userId: user.id, username: user.username, role: user.role },
+                { userId: user.id, username: user.username, role: user.role || 'user' },
                 PRIVATE_KEY,
                 { 
                     algorithm: 'RS256',
