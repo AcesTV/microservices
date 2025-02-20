@@ -47,10 +47,8 @@ export const authMiddleware = async (req, res, next) => {
         }
 
         const token = authHeader.split(' ')[1];
-        console.log('Verifying token for path:', req.path);
         const decoded = jwt.verify(token, JWT_SECRET);
-        console.log('Token decoded successfully:', decoded);
-
+        
         // Vérifier les permissions pour les routes protégées
         const matchedRoute = protectedRoutes.find(route => {
             const pathRegex = new RegExp('^' + route.path.replace(/:\w+/g, '[^/]+') + '$');
@@ -58,16 +56,19 @@ export const authMiddleware = async (req, res, next) => {
         });
 
         if (matchedRoute) {
-            // Pour l'instant, on considère tous les utilisateurs comme ayant le rôle 'user'
-            // À améliorer plus tard avec une vraie gestion des rôles
-            const userRoles = ['user'];
-            const hasPermission = matchedRoute.roles.some(role => userRoles.includes(role));
+            // Utiliser le rôle du token
+            const userRole = decoded.role || 'user';
+            const hasPermission = matchedRoute.roles.includes(userRole);
 
             if (!hasPermission) {
-                return res.status(403).json({ message: 'Insufficient permissions' });
+                return res.status(403).json({ 
+                    message: 'Insufficient permissions',
+                    required: matchedRoute.roles,
+                    current: userRole
+                });
             }
         }
-        
+
         req.user = decoded;
         next();
     } catch (error) {

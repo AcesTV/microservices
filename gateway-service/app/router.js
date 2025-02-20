@@ -15,24 +15,25 @@ const createServiceProxy = (target, pathRewrite) => {
         onProxyReq: (proxyReq, req, res) => {
             // Gérer le corps pour les requêtes avec un body (POST, PUT, PATCH)
             if (['POST', 'PUT', 'PATCH'].includes(req.method) && req.body) {
-                const contentType = proxyReq.getHeader('Content-Type');
-                const writeBody = (bodyData) => {
-                    proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
-                    proxyReq.write(bodyData);
-                };
+                const bodyData = JSON.stringify(req.body);
+                // Définir les headers avant d'écrire le body
+                proxyReq.setHeader('Content-Type', 'application/json');
+                proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
 
-                if (contentType === 'application/json') {
-                    writeBody(JSON.stringify(req.body));
-                } else if (contentType === 'application/x-www-form-urlencoded') {
-                    const body = new URLSearchParams(req.body).toString();
-                    writeBody(body);
+                // Transmettre les informations de l'utilisateur au service
+                if (req.user) {
+                    proxyReq.setHeader('X-User-Id', req.user.userId);
+                    proxyReq.setHeader('X-User-Role', req.user.role || 'user');
                 }
-            }
 
-            // Transmettre les informations de l'utilisateur au service
-            if (req.user) {
-                proxyReq.setHeader('X-User-Id', req.user.userId);
-                proxyReq.setHeader('X-User-Role', req.user.role || 'user');
+                // Écrire le body en dernier
+                proxyReq.write(bodyData);
+            } else {
+                // Pour les requêtes sans body, ajouter uniquement les headers d'utilisateur
+                if (req.user) {
+                    proxyReq.setHeader('X-User-Id', req.user.userId);
+                    proxyReq.setHeader('X-User-Role', req.user.role || 'user');
+                }
             }
         },
         // Gestion des erreurs
@@ -42,16 +43,20 @@ const createServiceProxy = (target, pathRewrite) => {
                 path: req.path,
                 error: err.message
             });
-            res.status(502).json({
-                error: 'Service Unavailable',
-                details: err.message,
-                method: req.method,
-                path: req.path
-            });
+            if (!res.headersSent) {
+                res.status(502).json({
+                    error: 'Service Unavailable',
+                    details: err.message,
+                    method: req.method,
+                    path: req.path
+                });
+            }
         },
-        // Configuration des en-têtes
+        // Configuration des en-têtes de réponse
         onProxyRes: (proxyRes, req, res) => {
-            proxyRes.headers['x-proxied-by'] = 'gateway';
+            if (!res.headersSent) {
+                proxyRes.headers['x-proxied-by'] = 'gateway';
+            }
             console.log('Proxy Response:', {
                 method: req.method,
                 path: req.path,
@@ -72,13 +77,13 @@ const menuServiceProxy = createServiceProxy(
     { '^/menu': '' }
 );
 
-// Appliquer le middleware d'authentification à toutes les routes
-router.use(authMiddleware);
-
 // Routes
 router.get('/', (req, res) => {
     res.json({ message: 'Gateway Service is running' });
 });
+
+// Appliquer le middleware d'authentification à toutes les routes
+router.use(authMiddleware);
 
 // Proxy routes
 router.use('/auth', authServiceProxy);
