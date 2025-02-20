@@ -12,6 +12,7 @@ services:
     depends_on:
       - auth-service
       - menu-service
+      - order-service
 
 
   auth-service:
@@ -102,6 +103,34 @@ services:
     depends_on:
       - menu-db
       
+  order-service:
+    build: 
+      context: order-service
+      dockerfile: Dockerfile
+    container_name: order-service
+    env_file:
+      - ./order-service/.env
+    networks:
+      - test-network
+    depends_on:
+      - order-db
+    volumes:
+      - ./order-service:/app
+
+  order-db:
+    image: postgres:15-alpine
+    container_name: order-db
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: order_db
+    volumes:
+      - order_postgres_data:/var/lib/postgresql/data
+      - ./order-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - test-network
+
 networks:
   test-network:
     driver: bridge
@@ -109,4 +138,6 @@ networks:
 volumes:
   auth_postgres_data:
   menu_mongodb_data:
+  order_postgres_data:
+  keys:
   

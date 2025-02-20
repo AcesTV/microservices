@@ -1,24 +1,19 @@
 {
-  "name": "auth-service",
+  "name": "order-service",
   "version": "1.0.0",
-  "description": "Authentication service",
+  "description": "Order management service",
   "type": "module",
   "main": "app/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app/server.js",
     "dev": "nodemon app/server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "express": "^4.21.2",
     "cors": "^2.8.5",
     "morgan": "^1.10.0",
-    "pg": "^8.13.3",
-    "bcryptjs": "^2.4.3",
+    "pg": "^8.11.3",
     "jsonwebtoken": "^9.0.2",
     "nodemon": "^3.1.9"
   }
-}
+} 

@@ -41,14 +41,13 @@ const createServiceProxy = (target, pathRewrite) => {
             console.error('Proxy Error:', {
                 method: req.method,
                 path: req.path,
-                error: err.message
+                error: err.message,
+                target: target
             });
             if (!res.headersSent) {
                 res.status(502).json({
                     error: 'Service Unavailable',
-                    details: err.message,
-                    method: req.method,
-                    path: req.path
+                    details: err.message
                 });
             }
         },
@@ -67,14 +66,19 @@ const createServiceProxy = (target, pathRewrite) => {
 };
 
 // Configuration des proxies
-const authServiceProxy = createServiceProxy(
+const authProxy = createServiceProxy(
     process.env.AUTH_SERVICE_URL,
     { '^/auth': '' }
 );
 
-const menuServiceProxy = createServiceProxy(
+const menuProxy = createServiceProxy(
     process.env.MENU_SERVICE_URL,
     { '^/menu': '' }
+);
+
+const orderProxy = createServiceProxy(
+    process.env.ORDER_SERVICE_URL,
+    { '^/orders': '/orders' }
 );
 
 // Routes
@@ -82,12 +86,16 @@ router.get('/', (req, res) => {
     res.json({ message: 'Gateway Service is running' });
 });
 
-// Appliquer le middleware d'authentification à toutes les routes
-router.use(authMiddleware);
+// Routes publiques
+router.post('/auth/signin', authProxy);
+router.post('/auth/signup', authProxy);
+router.post('/auth/refresh', authProxy);
 
-// Proxy routes
-router.use('/auth', authServiceProxy);
-router.use('/menu', menuServiceProxy);
+// Routes protégées
+router.use('/auth/*', authMiddleware, authProxy);
+router.use('/menu/*', authMiddleware, menuProxy);
+router.use('/orders', authMiddleware, orderProxy);
+router.use('/orders/*', authMiddleware, orderProxy);
 
 // 404 handler
 router.use((req, res) => {

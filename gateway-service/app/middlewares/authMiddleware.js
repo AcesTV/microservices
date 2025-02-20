@@ -24,7 +24,15 @@ const protectedRoutes = [
     // Routes d'authentification protégées
     { path: '/auth/me', method: 'GET', roles: ['user', 'admin'] },
     { path: '/auth/verify', method: 'GET', roles: ['user', 'admin'] },
-    { path: '/auth/signout', method: 'POST', roles: ['user', 'admin'] }
+    { path: '/auth/signout', method: 'POST', roles: ['user', 'admin'] },
+
+    // Routes des commandes
+    { path: '/orders', method: 'GET', roles: ['user', 'admin'] },  // listUserOrders pour users
+    { path: '/orders/all', method: 'GET', roles: ['admin'] },      // list pour admin
+    { path: '/orders', method: 'POST', roles: ['user', 'admin'] }, // create
+    { path: '/orders/:id', method: 'GET', roles: ['user', 'admin'] }, // get
+    { path: '/orders/:id/status', method: 'PATCH', roles: ['admin'] }, // updateStatus
+    { path: '/orders/:id', method: 'DELETE', roles: ['admin'] }  // delete
 ];
 
 export const authMiddleware = async (req, res, next) => {
