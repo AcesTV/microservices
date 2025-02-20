@@ -71,3 +71,7 @@ coverage/
 
 # Yarn Integrity file
 .yarn-integrity 
+
+# Keys
+**/keys/*
+!**/keys/.gitkeep 

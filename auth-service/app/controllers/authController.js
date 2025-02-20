@@ -1,9 +1,13 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import pool from '../config/database.js';
 
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const PRIVATE_KEY = fs.readFileSync(path.join(__dirname, '../../keys/jwtprivate.pem'));
+const PUBLIC_KEY = fs.readFileSync(path.join(__dirname, '../../keys/jwtpublic.pem'));
 
 export const authController = {
     // Sign Up
@@ -70,14 +74,20 @@ export const authController = {
 
             const accessToken = jwt.sign(
                 { userId: user.id, username: user.username, role: user.role },
-                JWT_SECRET,
-                { expiresIn: '15m' }
+                PRIVATE_KEY,
+                { 
+                    algorithm: 'RS256',
+                    expiresIn: '15m' 
+                }
             );
 
             const refreshToken = jwt.sign(
                 { userId: user.id },
-                JWT_REFRESH_SECRET,
-                { expiresIn: '7d' }
+                PRIVATE_KEY,
+                { 
+                    algorithm: 'RS256',
+                    expiresIn: '7d' 
+                }
             );
 
             await client.query(
@@ -122,7 +132,7 @@ export const authController = {
             }
 
             const token = authHeader.split(' ')[1];
-            jwt.verify(token, JWT_SECRET, (err, decoded) => {
+            jwt.verify(token, PUBLIC_KEY, { algorithms: ['RS256'] }, (err, decoded) => {
                 if (err) {
                     return res.status(401).json({ message: 'Invalid token' });
                 }
@@ -151,7 +161,7 @@ export const authController = {
             }
 
             // Vérifier et décoder le refresh token
-            jwt.verify(refreshToken, JWT_REFRESH_SECRET, async (err, decoded) => {
+            jwt.verify(refreshToken, PRIVATE_KEY, { algorithms: ['RS256'] }, async (err, decoded) => {
                 if (err) {
                     await client.query(
                         'DELETE FROM tokens WHERE token = $1',
@@ -170,8 +180,11 @@ export const authController = {
                 const user = userResult.rows[0];
                 const accessToken = jwt.sign(
                     { userId: user.id, username: user.username, role: user.role },
-                    JWT_SECRET,
-                    { expiresIn: '15m' }
+                    PRIVATE_KEY,
+                    { 
+                        algorithm: 'RS256',
+                        expiresIn: '15m' 
+                    }
                 );
 
                 client.release();
@@ -191,7 +204,7 @@ export const authController = {
             }
 
             const token = authHeader.split(' ')[1];
-            const decoded = jwt.verify(token, JWT_SECRET);
+            const decoded = jwt.verify(token, PUBLIC_KEY);
 
             const client = await pool.connect();
             

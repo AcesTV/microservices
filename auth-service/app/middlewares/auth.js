@@ -1,6 +1,11 @@
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const PUBLIC_KEY = fs.readFileSync(path.join(__dirname, '../../keys/jwtpublic.pem'));
 
 export const authMiddleware = async (req, res, next) => {
     try {
@@ -10,7 +15,7 @@ export const authMiddleware = async (req, res, next) => {
         }
 
         const token = authHeader.split(' ')[1];
-        jwt.verify(token, JWT_SECRET, (err, decoded) => {
+        jwt.verify(token, PUBLIC_KEY, { algorithms: ['RS256'] }, (err, decoded) => {
             if (err) {
                 return res.status(401).json({ message: 'Invalid token' });
             }

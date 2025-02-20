@@ -1,9 +1,10 @@
 import jwt from 'jsonwebtoken';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-    throw new Error('JWT_SECRET is not defined in environment variables');
-}
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const PUBLIC_KEY = fs.readFileSync(path.join(__dirname, '../../keys/jwtpublic.pem'));
 
 // Liste des routes publiques
 const publicRoutes = [
@@ -47,7 +48,7 @@ export const authMiddleware = async (req, res, next) => {
         }
 
         const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, JWT_SECRET);
+        const decoded = jwt.verify(token, PUBLIC_KEY, { algorithms: ['RS256'] });
         
         // Vérifier les permissions pour les routes protégées
         const matchedRoute = protectedRoutes.find(route => {
