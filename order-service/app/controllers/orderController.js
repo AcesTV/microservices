@@ -1,4 +1,5 @@
 import pool from '../config/database.js';
+import publisher from '../messaging/publisher.js';
 
 export const orderController = {
     // Créer une commande
@@ -26,6 +27,14 @@ export const orderController = {
                     [order.id, item.productId, item.quantity, item.unitPrice]
                 );
             }
+
+            // Publier l'événement de création de commande
+            await publisher.publishEvent('orders.created', {
+                orderId: order.id,
+                userId: userId,
+                totalAmount: totalAmount,
+                items: items
+            });
 
             await client.query('COMMIT');
             res.status(201).json(order);
@@ -158,6 +167,12 @@ export const orderController = {
             if (result.rows.length === 0) {
                 return res.status(404).json({ message: 'Order not found' });
             }
+
+            // Publier l'événement de mise à jour de statut
+            await publisher.publishEvent('orders.status_updated', {
+                orderId: id,
+                status: status
+            });
 
             res.json(result.rows[0]);
         } catch (error) {
