@@ -5,6 +5,10 @@ class NotificationController {
         this.notificationService = new NotificationService();
     }
 
+    async initialize() {
+        await this.notificationService.initialize();
+    }
+
     async getUserNotifications(req, res) {
         try {
             const { userId } = req.params;
@@ -39,4 +43,7 @@ class NotificationController {
     }
 }
 
-export default new NotificationController(); 
+// Create the controller instance without initialization
+const controller = new NotificationController();
+
+export default controller; 

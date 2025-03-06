@@ -10,6 +10,10 @@ class Consumer {
         this.notificationService = new NotificationService();
     }
 
+    async initialize() {
+        await this.notificationService.initialize();
+    }
+
     async connect() {
         try {
             if (!this.isConnected) {
@@ -37,6 +41,9 @@ class Consumer {
 
     async startConsuming() {
         try {
+            // Initialize the service first
+            await this.initialize();
+            
             if (!this.isConnected) {
                 await this.connect();
             }

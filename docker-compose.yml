@@ -187,6 +187,7 @@ volumes:
   auth_postgres_data:
   menu_mongodb_data:
   order_postgres_data:
+  notification_mongodb_data:
   rabbitmq_data:
   keys:
   

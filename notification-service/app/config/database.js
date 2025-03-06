@@ -1,22 +1,20 @@
-import { MongoClient } from 'mongodb';
+import dotenv from 'dotenv';
+dotenv.config();
 
-let db = null;
+const {
+  MONGODB_USERNAME,
+  MONGODB_PASSWORD,
+  MONGODB_HOST,
+  MONGODB_PORT,
+  MONGODB_DATABASE
+} = process.env;
 
-export const connectDB = async () => {
-    try {
-        const client = await MongoClient.connect(process.env.MONGODB_URI);
-        db = client.db('notification_db');
-        console.log('Connected to MongoDB');
-        return db;
-    } catch (error) {
-        console.error('MongoDB connection error:', error);
-        process.exit(1);
-    }
-};
+const url = `mongodb://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@${MONGODB_HOST}:${MONGODB_PORT}/${MONGODB_DATABASE}?authSource=admin`;
 
-export const getDatabase = () => {
-    if (!db) {
-        throw new Error('Database not initialized');
-    }
-    return db;
+export default {
+  url,
+  options: {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  }
 }; 
