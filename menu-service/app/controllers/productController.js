@@ -19,7 +19,7 @@ export const productController = {
     // Get product by ID
     getProductById: async (req, res) => {
         try {
-            const client = await MongoClient.connect(url);
+            const client = await MongoClient.connect(process.env.MONGODB_URI);
             const db = client.db('menu_db');
             const product = await db.collection('products').findOne({ 
                 _id: ObjectId.createFromHexString(req.params.id)
@@ -77,7 +77,7 @@ export const productController = {
     // Delete product
     deleteProduct: async (req, res) => {
         try {
-            const client = await MongoClient.connect(url);
+            const client = await MongoClient.connect(process.env.MONGODB_URI);
             const db = client.db('menu_db');
             const result = await db.collection('products').deleteOne({ 
                 _id: ObjectId.createFromHexString(req.params.id)

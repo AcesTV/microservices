@@ -37,4 +37,15 @@ db.menus.insertOne({
   products: ['Burger Classic', 'Frites Maison'],
   created_at: new Date(),
   active: true
-}); 
+});
+
+db.products.updateMany(
+    {},
+    {
+        $set: {
+            totalOrders: 0,
+            totalQuantitySold: 0,
+            totalRevenue: 0
+        }
+    }
+); 

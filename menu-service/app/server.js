@@ -4,6 +4,8 @@ import router from "./router.js";
 import cors from 'cors';
 import morgan from 'morgan';
 import bodyParser from "body-parser";
+import './messaging/consumer.js';  // Importer le consumer
+
 const app = express();
 
 const port = process.env.PORT || 8001;
